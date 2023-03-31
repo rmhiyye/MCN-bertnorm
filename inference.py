@@ -21,14 +21,12 @@ def inference(norm_list, basenorm, dd_test):
     # Build labels/tags embeddings from ontology:
     ######
     device = my_global.get_value('device')
-    max_length = my_global.get_value('max_length')
-    tokenizer = my_global.get_value('tokenizer')
-    model = my_global.get_value('model')
     embbed_size = my_global.get_value('embbed_size')
+    model = my_global.get_value('model')
     cui_encode = dict()
     with torch.no_grad():
         for cui in norm_list:
-            cui_encode[cui] = tokenizer.encode(cui, padding="max_length", max_length=max_length, truncation=True, add_special_tokens=True, return_tensors="pt")
+            cui_encode[cui] = basenorm(model(tokenize(cui))[0][:,0]).cpu().detach().numpy()
             if embbed_size == None:
                 embbed_size = len(cui_encode[cui][0])
     print("Number of concepts in ontology:", len(norm_list))

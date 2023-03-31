@@ -50,6 +50,7 @@ n_span_split:
 def mention2concept(note_path, norm_path, file_dict, with_text = True):
     n_span_split_keys = ["2", "1", "0"]
     n_span_split = {key: 0 for key in n_span_split_keys}
+    cui_less_dict = dict()
     for key in file_dict.keys():
         filepath = os.getcwd() + "/dataset/train"
         sub_dict = dict()
@@ -63,27 +64,30 @@ def mention2concept(note_path, norm_path, file_dict, with_text = True):
             # norm_id, cui, start, end = line.split("||")
             line = line.split("||")
             norm_id = line[0]
-            cui = line[1]
-            line[2:] = [int(x) for x in line[2:]] # convert str into int
-            span_split = (len(line)-2)/2 - 1 # (number_terms - number_id_and_cui)/2 - 1
-            if span_split == 2:
-                n_span_split["2"] += 1
-                mention = texts[line[2]: line[3]] + texts[line[4]: line[5]] + texts[line[6]: line[7]]
-            elif span_split == 1:
-                n_span_split["1"] += 1
-                mention = texts[line[2]: line[3]] + texts[line[4]: line[5]]
-            elif span_split == 0:
-                n_span_split["0"] += 1
-                mention = texts[line[2]: line[3]]
+            if line[1] != 'CUI-less':
+                cui = line[1]
+                line[2:] = [int(x) for x in line[2:]] # convert str into int
+                span_split = (len(line)-2)/2 - 1 # (number_terms - number_id_and_cui)/2 - 1
+                if span_split == 2:
+                    n_span_split["2"] += 1
+                    mention = texts[line[2]: line[3]] + texts[line[4]: line[5]] + texts[line[6]: line[7]]
+                elif span_split == 1:
+                    n_span_split["1"] += 1
+                    mention = texts[line[2]: line[3]] + texts[line[4]: line[5]]
+                elif span_split == 0:
+                    n_span_split["0"] += 1
+                    mention = texts[line[2]: line[3]]
+                else:
+                    raise ValueError("there are more than 2 span splits.")
+                subsub_dict["cui"] = cui
+                subsub_dict["mention"] = mention
+                sub_dict[norm_id] = subsub_dict
             else:
-                raise ValueError("there are more than 2 span splits.")
-            subsub_dict["cui"] = cui
-            subsub_dict["mention"] = mention
-            sub_dict[norm_id] = subsub_dict
+                cui_less_dict[key] = 'CUI-less'
         if with_text:
             sub_dict["text"] = texts
         file_dict[key] = sub_dict
-    return file_dict, n_span_split
+    return file_dict, cui_less_dict, n_span_split
 
 def encoder(dataset, tokenizer):
     # Constructs two dictionnaries containing tokenized mentions (X) and associated labels (Y) respectively.
