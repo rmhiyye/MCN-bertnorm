@@ -14,7 +14,7 @@ def tokenize(sentence):
     device = my_global.get_value('device')
     return tokenizer.encode(sentence, padding="max_length", max_length=max_length, truncation=True, add_special_tokens=True, return_tensors="pt").to(device) # Tokenize input into ids.
 
-def inference(norm_list, basenorm, dd_test):
+def inference(norm_list, dd_test):
     print("Embedding ontology concept labels...")
 
     ######
@@ -26,7 +26,7 @@ def inference(norm_list, basenorm, dd_test):
     cui_encode = dict()
     with torch.no_grad():
         for cui in norm_list:
-            cui_encode[cui] = basenorm(model(tokenize(cui))[0][:,0]).cpu().detach().numpy()
+            cui_encode[cui] = model(tokenize(cui))[0][:,0].cpu().detach().numpy()
             if embbed_size == None:
                 embbed_size = len(cui_encode[cui][0])
     print("Number of concepts in ontology:", len(norm_list))
@@ -39,7 +39,7 @@ def inference(norm_list, basenorm, dd_test):
     with torch.no_grad():
         for i, id in tqdm(enumerate(dd_test.keys()), desc ='Building embeddings from cui list'):
             tokenized_mention = torch.tensor(tokenize(dd_test[id]['mention']).to(device))
-            X_pred[i] = basenorm(model(tokenized_mention)[0][:,0]).cpu().detach().numpy()
+            X_pred[i] = model(tokenized_mention)[0][:,0].cpu().detach().numpy()
 
     ######
     # Nearest neighbours calculation:
